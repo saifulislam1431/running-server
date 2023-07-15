@@ -26,6 +26,70 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const allShoesCollection = client.db("running").collection("allShoes");
+    const topCollection = client.db("running").collection("top");
+    const reviewCollection = client.db("running").collection("reviews")
+    const cartCollection = client.db("running").collection("cart")
+    const userCollection = client.db("running").collection("users")
+
+    // User Collection
+    app.post("all-users",async(req,res)=>{
+      const userData = req.body;
+      const email = userData.email;
+      const existingUser = await userCollection.findOne({email : email})
+      if(existingUser){
+        return res.json("User Exist")
+      }
+      const result = await userCollection.insertOne(userData)
+      res.send(result);
+    })
+
+
+    //All Shoe API
+    app.get("/all-shoes" , async(req,res)=>{
+      const result = await allShoesCollection.find({}).toArray();
+      res.send(result)
+    })
+
+    // Add Shoe Cart
+    app.post("/user-cart" , async(req , res)=>{
+      const addData = req.body;
+      const result = await cartCollection.insertOne(addData);
+      res.send(result)
+    })
+
+    app.get("/user-cart" , async(req , res)=>{
+      const query = req.query.Email;
+      const result = await cartCollection.find({Email: query}).toArray()
+      res.send(result)
+    })
+
+
+
+
+
+    // Review API
+    app.get("/reviews" , async(req,res)=>{
+      const result = await reviewCollection.find({}).toArray();
+      res.send(result)
+    })
+
+
+
+
+    //Top Shoes API
+    app.get("/top-brand", async(req , res)=>{
+      const result = await topCollection.find({}).toArray();
+      res.send(result)
+    })
+
+
+
+
+
+
+
+
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     // Send a ping to confirm a successful connection
