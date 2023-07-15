@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express();
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8cnv71c.mongodb.net/?retryWrites=true&w=majority`;
@@ -33,34 +33,59 @@ async function run() {
     const userCollection = client.db("running").collection("users")
 
     // User Collection
-    app.post("all-users",async(req,res)=>{
+    app.post("/all-users", async (req, res) => {
       const userData = req.body;
       const email = userData.email;
-      const existingUser = await userCollection.findOne({email : email})
-      if(existingUser){
+      const existingUser = await userCollection.findOne({ email: email })
+      if (existingUser) {
         return res.json("User Exist")
       }
       const result = await userCollection.insertOne(userData)
       res.send(result);
     })
 
+    app.get("/all-users", async (req, res) => {
+      const result = await userCollection.find({}).toArray();
+      res.send(result)
+    })
+
+    app.patch("/all-users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateUser = {
+        $set: {
+          role: "admin"
+        }
+      }
+      const result = await userCollection.updateOne(filter, updateUser)
+      res.send(result)
+    })
+
+    app.get("/all-users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const result = { admin: user?.role === "admin" };
+      res.send(result)
+    })
+
 
     //All Shoe API
-    app.get("/all-shoes" , async(req,res)=>{
+    app.get("/all-shoes", async (req, res) => {
       const result = await allShoesCollection.find({}).toArray();
       res.send(result)
     })
 
     // Add Shoe Cart
-    app.post("/user-cart" , async(req , res)=>{
+    app.post("/user-cart", async (req, res) => {
       const addData = req.body;
       const result = await cartCollection.insertOne(addData);
       res.send(result)
     })
 
-    app.get("/user-cart" , async(req , res)=>{
+    app.get("/user-cart", async (req, res) => {
       const query = req.query.Email;
-      const result = await cartCollection.find({Email: query}).toArray()
+      const result = await cartCollection.find({ Email: query }).toArray()
       res.send(result)
     })
 
@@ -69,7 +94,7 @@ async function run() {
 
 
     // Review API
-    app.get("/reviews" , async(req,res)=>{
+    app.get("/reviews", async (req, res) => {
       const result = await reviewCollection.find({}).toArray();
       res.send(result)
     })
@@ -78,7 +103,7 @@ async function run() {
 
 
     //Top Shoes API
-    app.get("/top-brand", async(req , res)=>{
+    app.get("/top-brand", async (req, res) => {
       const result = await topCollection.find({}).toArray();
       res.send(result)
     })
@@ -108,10 +133,10 @@ run().catch(console.dir);
 
 
 
-app.get("/" , (req , res)=>{
-    res.send("This is Running's server")
+app.get("/", (req, res) => {
+  res.send("This is Running's server")
 })
 
-app.listen(port , ()=>{
-    console.log(`This server is running at port ${port}`);
+app.listen(port, () => {
+  console.log(`This server is running at port ${port}`);
 })
